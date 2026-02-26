@@ -17,8 +17,41 @@ const { errorHandler, notFoundHandler } = require('./middlewares/error.middlewar
 
 const app = express();
 
+const baseOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);
+const allowedOrigins = new Set(baseOrigins);
+
+baseOrigins.forEach((origin) => {
+    try {
+        const url = new URL(origin);
+        if (url.hostname === 'localhost') {
+            url.hostname = '127.0.0.1';
+            allowedOrigins.add(url.toString().replace(/\/$/, ''));
+        }
+        if (url.hostname === '127.0.0.1') {
+            url.hostname = 'localhost';
+            allowedOrigins.add(url.toString().replace(/\/$/, ''));
+        }
+        allowedOrigins.add(origin.replace(/\/$/, ''));
+    } catch {
+        allowedOrigins.add(origin.replace(/\/$/, ''));
+    }
+});
+
 app.use(helmet());
-app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.has(origin)) {
+                return callback(null, true);
+            }
+            if (allowedOrigins.has(origin.replace(/\/$/, ''))) {
+                return callback(null, true);
+            }
+            return callback(new Error('Not allowed by CORS'));
+        },
+        credentials: true
+    })
+);
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(compression());

@@ -5,7 +5,14 @@ const ApiError = require('../utils/ApiError');
 const { razorpay } = require('../config/razorpay');
 const { env } = require('../config/env');
 
+const ensurePaymentConfig = () => {
+    if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+        throw new ApiError(503, 'Payment service is temporarily unavailable');
+    }
+};
+
 const createBuyOrder = async ({ projectId, buyerId }) => {
+    ensurePaymentConfig();
     const project = await Project.findOne({ _id: projectId, status: 'approved' });
 
     if (!project) {
@@ -48,6 +55,7 @@ const verifyPayment = async ({
     projectId,
     buyerId
 }) => {
+    ensurePaymentConfig();
     const generatedSignature = crypto
         .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
         .update(`${razorpayOrderId}|${razorpayPaymentId}`)

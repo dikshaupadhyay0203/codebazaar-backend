@@ -8,7 +8,7 @@ const env = {
     MONGODB_URI: process.env.MONGODB_URI || process.env.MONGO_URI,
     JWT_SECRET: process.env.JWT_SECRET,
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
-    CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173',
     RATE_LIMIT_WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX) || 100,
     REDIS_URL: process.env.REDIS_URL,
@@ -21,7 +21,7 @@ const env = {
     BASE_URL: process.env.BASE_URL || 'http://localhost:5000'
 };
 
-const requiredKeys = ['MONGODB_URI', 'JWT_SECRET', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET'];
+const requiredKeys = ['MONGODB_URI', 'JWT_SECRET'];
 
 requiredKeys.forEach((key) => {
     if (!env[key]) {
