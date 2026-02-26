@@ -17,12 +17,20 @@ const createBuyOrder = async ({ projectId, buyerId }) => {
         throw new ApiError(409, 'Project already purchased');
     }
 
-    const order = await razorpay.orders.create({
-        amount: Math.round(project.price * 100),
-        currency: 'INR',
-        receipt: `cb_${project._id}_${Date.now()}`,
-        notes: { projectId: String(project._id), buyerId: String(buyerId) }
-    });
+    const receipt = `cb_${String(project._id).slice(-10)}_${Date.now().toString(36)}`;
+
+    let order;
+    try {
+        order = await razorpay.orders.create({
+            amount: Math.round(project.price * 100),
+            currency: 'INR',
+            receipt,
+            notes: { projectId: String(project._id), buyerId: String(buyerId) }
+        });
+    } catch (error) {
+        const providerMessage = error?.error?.description || error?.message || 'Unable to create Razorpay order';
+        throw new ApiError(400, providerMessage);
+    }
 
     return {
         orderId: order.id,

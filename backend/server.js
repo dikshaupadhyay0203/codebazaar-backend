@@ -10,6 +10,16 @@ const startServer = async () => {
     await connectDB();
     await connectRedis();
 
+    server.on('error', (error) => {
+        if (error.code === 'EADDRINUSE') {
+            console.error(`Port ${env.PORT} is already in use. Stop the running backend process before starting a new one.`);
+            process.exit(1);
+        }
+
+        console.error('Server start error:', error.message);
+        process.exit(1);
+    });
+
     server.listen(env.PORT, () => {
         console.log(`CodeBazaar API running on port ${env.PORT}`);
     });

@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "nodemon server.js",
         "start": "node server.js",
+        "seed:projects": "node src/utils/seedProjects.js",
         "test": "jest --runInBand",
         "test:watch": "jest --watch"
     },
