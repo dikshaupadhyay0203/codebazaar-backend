@@ -40,6 +40,10 @@ const loginUser = async ({ email, password }) => {
         throw new ApiError(401, 'Invalid email or password');
     }
 
+    if (user.isVerified === false) {
+        throw new ApiError(403, 'Please verify your email before login');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
         throw new ApiError(401, 'Invalid email or password');

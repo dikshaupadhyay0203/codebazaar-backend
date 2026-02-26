@@ -22,7 +22,38 @@ router.post(
         body('role').optional().isIn(['user', 'creator', 'admin']).withMessage('Invalid role')
     ],
     validateRequest,
-    authController.register
+    authController.sendOtp
+);
+
+router.post(
+    '/send-otp',
+    [
+        body('name').trim().notEmpty().withMessage('Name is required'),
+        body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
+        body('password')
+            .isStrongPassword({ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 })
+            .withMessage('Password must be strong'),
+        body('role').optional().isIn(['user', 'creator', 'admin']).withMessage('Invalid role')
+    ],
+    validateRequest,
+    authController.sendOtp
+);
+
+router.post(
+    '/verify-otp',
+    [
+        body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
+        body('otp').isLength({ min: 6, max: 6 }).isNumeric().withMessage('OTP must be 6 digits')
+    ],
+    validateRequest,
+    authController.verifyOtp
+);
+
+router.post(
+    '/resend-otp',
+    [body('email').isEmail().normalizeEmail().withMessage('Valid email required')],
+    validateRequest,
+    authController.resendOtp
 );
 
 /**
