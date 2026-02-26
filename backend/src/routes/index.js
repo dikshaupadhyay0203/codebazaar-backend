@@ -4,6 +4,7 @@ const projectRoutes = require('./project.routes');
 const paymentRoutes = require('./payment.routes');
 const reviewRoutes = require('./review.routes');
 const dashboardRoutes = require('./dashboard.routes');
+const aiChatRoutes = require('./aiChat.routes');
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use('/projects', projectRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/ai', aiChatRoutes);
 
 module.exports = router;

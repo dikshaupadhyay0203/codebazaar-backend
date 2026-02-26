@@ -14,6 +14,9 @@ const env = {
     REDIS_URL: process.env.REDIS_URL,
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_API_KEY,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     UPLOAD_DIR: process.env.UPLOAD_DIR || 'uploads',
     BASE_URL: process.env.BASE_URL || 'http://localhost:5000'
 };
