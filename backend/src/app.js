@@ -76,6 +76,11 @@ app.use('/uploads', express.static(primaryUploadDir));
 if (legacyUploadDir !== primaryUploadDir) {
     app.use('/uploads', express.static(legacyUploadDir));
 }
+
+app.get('/', (req, res) => {
+    res.send('CodeBazaar Backend is Running 🚀');
+});
+
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', routes);
 
