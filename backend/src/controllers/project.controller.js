@@ -5,7 +5,7 @@ const ApiResponse = require('../utils/ApiResponse');
 
 const uploadProject = asyncHandler(async (req, res) => {
     const project = await projectService.createProject({ body: req.body, files: req.files, user: req.user });
-    res.status(201).json(new ApiResponse(201, 'Project uploaded and pending admin approval', project));
+    res.status(201).json(new ApiResponse(201, 'Project uploaded and visible to all users', project));
 });
 
 const approveProject = asyncHandler(async (req, res) => {
@@ -33,6 +33,11 @@ const downloadProject = asyncHandler(async (req, res) => {
     return res.download(filePath, fileName);
 });
 
+const purchasedProjectAssets = asyncHandler(async (req, res) => {
+    const assets = await projectService.getPurchasedProjectAssets({ projectId: req.params.projectId });
+    res.status(200).json(new ApiResponse(200, 'Purchased project assets fetched', assets));
+});
+
 const myUploads = asyncHandler(async (req, res) => {
     const uploads = await projectService.getMyUploads(req.user._id);
     res.status(200).json(new ApiResponse(200, 'My uploads fetched', uploads));
@@ -54,6 +59,7 @@ module.exports = {
     getApprovedProjects,
     getProjectDetails,
     downloadProject,
+    purchasedProjectAssets,
     myUploads,
     myPurchases,
     pendingProjects

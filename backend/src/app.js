@@ -16,6 +16,8 @@ const routes = require('./routes');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
 
 const app = express();
+const primaryUploadDir = path.resolve(__dirname, '../', env.UPLOAD_DIR);
+const legacyUploadDir = path.join(process.cwd(), env.UPLOAD_DIR);
 
 const baseOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);
 const allowedOrigins = new Set(baseOrigins);
@@ -70,7 +72,10 @@ app.use(
     })
 );
 
-app.use('/uploads', express.static(path.join(process.cwd(), env.UPLOAD_DIR)));
+app.use('/uploads', express.static(primaryUploadDir));
+if (legacyUploadDir !== primaryUploadDir) {
+    app.use('/uploads', express.static(legacyUploadDir));
+}
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', routes);
 

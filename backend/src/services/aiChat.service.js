@@ -6,9 +6,28 @@ You help users discover projects, compare tech stacks, pricing, and buying flow.
 Keep answers concise, practical, and friendly.
 If asked to do something unrelated to marketplace help, respond politely and redirect to CodeBazaar context.`;
 
+const isGreeting = (text) => /^(hi|hii+|hello+|hey+|yo+|good\s*(morning|afternoon|evening))\b/i.test(text);
+
+const buildQuickAssistReply = (messages) => {
+    const latestMessage = (messages[messages.length - 1]?.content || '').trim();
+
+    if (!latestMessage) {
+        return 'I can help you choose a project based on stack, budget, and rating. Tell me what you need.';
+    }
+
+    if (isGreeting(latestMessage)) {
+        return 'Hi! I am CodeBazaar Assistant. Tell me your budget, preferred tech stack, and use case, and I will suggest the best project options.';
+    }
+
+    return 'I can still help right now. Share your target stack, budget range, and project type, and I will suggest what to buy and what to avoid.';
+};
+
 const buildFallbackReply = (messages) => {
-    const latestMessage = messages[messages.length - 1]?.content || '';
-    return `AI provider is not configured yet. You asked: "${latestMessage}".\n\nTo enable full AI chat, set OPENAI_API_KEY (and optional OPENAI_MODEL/OPENAI_BASE_URL) in backend .env and restart the server.`;
+    return buildQuickAssistReply(messages);
+};
+
+const buildProviderFailureReply = (messages) => {
+    return buildQuickAssistReply(messages);
 };
 
 const getChatCompletion = async ({ messages }) => {
@@ -44,33 +63,54 @@ const getChatCompletion = async ({ messages }) => {
         max_tokens: 400
     };
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${env.OPENAI_API_KEY}`
-        },
-        body: JSON.stringify(payload)
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const data = await response.json().catch(() => ({}));
+    try {
+        const response = await fetch(`${baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
 
-    if (!response.ok) {
-        const providerMessage = data?.error?.message || 'AI provider request failed';
-        throw new ApiError(400, providerMessage);
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            return {
+                provider: 'fallback',
+                model: payload.model,
+                reply: buildProviderFailureReply(normalizedMessages)
+            };
+        }
+
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+
+        if (!reply) {
+            return {
+                provider: 'fallback',
+                model: payload.model,
+                reply: buildProviderFailureReply(normalizedMessages)
+            };
+        }
+
+        return {
+            provider: 'openai-compatible',
+            model: payload.model,
+            reply
+        };
+    } catch {
+        return {
+            provider: 'fallback',
+            model: payload.model,
+            reply: buildProviderFailureReply(normalizedMessages)
+        };
+    } finally {
+        clearTimeout(timeout);
     }
-
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-
-    if (!reply) {
-        throw new ApiError(500, 'AI provider returned empty response');
-    }
-
-    return {
-        provider: 'openai-compatible',
-        model: payload.model,
-        reply
-    };
 };
 
 module.exports = { getChatCompletion };

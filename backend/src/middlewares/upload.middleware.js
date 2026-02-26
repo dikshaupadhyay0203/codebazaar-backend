@@ -4,7 +4,7 @@ const multer = require('multer');
 const { env } = require('../config/env');
 const ApiError = require('../utils/ApiError');
 
-const uploadDir = path.join(process.cwd(), env.UPLOAD_DIR);
+const uploadDir = path.resolve(__dirname, '../../', env.UPLOAD_DIR);
 
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -23,7 +23,7 @@ const fileFilter = (req, file, cb) => {
         return cb(new ApiError(400, 'projectZip must be a ZIP file'));
     }
 
-    if (file.fieldname === 'projectImage' && !file.mimetype.startsWith('image/')) {
+    if ((file.fieldname === 'projectImage' || file.fieldname === 'projectImages') && !file.mimetype.startsWith('image/')) {
         return cb(new ApiError(400, 'projectImage must be an image'));
     }
 
@@ -32,7 +32,8 @@ const fileFilter = (req, file, cb) => {
 
 const uploadProjectAssets = multer({ storage, fileFilter, limits: { fileSize: 50 * 1024 * 1024 } }).fields([
     { name: 'projectZip', maxCount: 1 },
-    { name: 'projectImage', maxCount: 1 }
+    { name: 'projectImage', maxCount: 1 },
+    { name: 'projectImages', maxCount: 8 }
 ]);
 
 module.exports = { uploadProjectAssets };

@@ -31,20 +31,20 @@ router.get(
     projectController.getApprovedProjects
 );
 
-router.get('/user/my-uploads', authMiddleware, allowRoles('creator', 'admin'), projectController.myUploads);
+router.get('/user/my-uploads', authMiddleware, projectController.myUploads);
 router.get('/user/my-purchases', authMiddleware, projectController.myPurchases);
 router.get('/admin/pending', authMiddleware, allowRoles('admin'), projectController.pendingProjects);
 
 router.post(
     '/',
     authMiddleware,
-    allowRoles('creator', 'admin'),
     uploadProjectAssets,
     [
         body('title').trim().notEmpty().withMessage('title is required'),
         body('description').trim().notEmpty().withMessage('description is required'),
         body('price').isFloat({ min: 0 }).withMessage('price must be >= 0'),
-        body('category').trim().notEmpty().withMessage('category is required')
+        body('category').trim().notEmpty().withMessage('category is required'),
+        body('projectLink').optional().isURL().withMessage('projectLink must be a valid URL')
     ],
     validateRequest,
     projectController.uploadProject
@@ -66,6 +66,15 @@ router.get(
     validateRequest,
     ensurePurchased,
     projectController.downloadProject
+);
+
+router.get(
+    '/:projectId/assets',
+    authMiddleware,
+    [objectIdValidation],
+    validateRequest,
+    ensurePurchased,
+    projectController.purchasedProjectAssets
 );
 
 router.get('/:projectId', [objectIdValidation], validateRequest, projectController.getProjectDetails);

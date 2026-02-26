@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const Project = require('../models/Project');
 const Purchase = require('../models/Purchase');
 const Review = require('../models/Review');
@@ -12,6 +13,9 @@ const createProject = async ({ body, files, user }) => {
 
     const zipFile = files.projectZip[0];
     const imageFile = files.projectImage?.[0];
+    const additionalImageFiles = files.projectImages || [];
+    const additionalImageUrls = additionalImageFiles.map((file) => `${env.BASE_URL}/uploads/${file.filename}`);
+    const coverImageUrl = imageFile ? `${env.BASE_URL}/uploads/${imageFile.filename}` : additionalImageUrls[0] || '';
 
     const techStack = Array.isArray(body.techStack)
         ? body.techStack
@@ -28,8 +32,10 @@ const createProject = async ({ body, files, user }) => {
         category: body.category,
         uploadedBy: user._id,
         fileUrl: `${env.BASE_URL}/uploads/${zipFile.filename}`,
-        imageUrl: imageFile ? `${env.BASE_URL}/uploads/${imageFile.filename}` : '',
-        status: 'pending'
+        projectLink: body.projectLink || '',
+        imageUrl: coverImageUrl,
+        projectImages: additionalImageUrls,
+        status: 'approved'
     });
 
     return project;
@@ -106,16 +112,33 @@ const getProjectDetails = async (projectId) => {
 };
 
 const getDownloadDetails = async (projectId) => {
-    const project = await Project.findById(projectId);
+    const project = await Project.findById(projectId).select('+fileUrl');
 
     if (!project) {
         throw new ApiError(404, 'Project not found');
     }
 
     const fileName = project.fileUrl.split('/uploads/')[1];
-    const filePath = path.join(process.cwd(), env.UPLOAD_DIR, fileName);
+    const primaryPath = path.resolve(__dirname, '../../', env.UPLOAD_DIR, fileName);
+    const legacyPath = path.join(process.cwd(), env.UPLOAD_DIR, fileName);
+    const filePath = fs.existsSync(primaryPath) ? primaryPath : legacyPath;
 
     return { filePath, fileName };
+};
+
+const getPurchasedProjectAssets = async ({ projectId }) => {
+    const project = await Project.findOne({ _id: projectId, status: 'approved' }).select('+projectLink');
+
+    if (!project) {
+        throw new ApiError(404, 'Project not found');
+    }
+
+    return {
+        projectId: project._id,
+        title: project.title,
+        projectLink: project.projectLink || '',
+        downloadUrl: `${env.BASE_URL}/api/projects/${project._id}/download`
+    };
 };
 
 const getMyUploads = async (userId) => {
@@ -136,6 +159,7 @@ module.exports = {
     getApprovedProjects,
     getProjectDetails,
     getDownloadDetails,
+    getPurchasedProjectAssets,
     getMyUploads,
     getMyPurchases,
     getPendingProjects

@@ -8,9 +8,11 @@ const projectSchema = new mongoose.Schema(
         techStack: [{ type: String, trim: true }],
         category: { type: String, required: true, trim: true },
         uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        fileUrl: { type: String, required: true },
+        fileUrl: { type: String, required: true, select: false },
+        projectLink: { type: String, default: '', trim: true, select: false },
         imageUrl: { type: String, default: '' },
-        status: { type: String, enum: ['pending', 'approved'], default: 'pending' }
+        projectImages: [{ type: String }],
+        status: { type: String, enum: ['pending', 'approved'], default: 'approved' }
     },
     { timestamps: { createdAt: true, updatedAt: true } }
 );
